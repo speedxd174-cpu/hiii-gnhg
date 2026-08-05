@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduSphere — School Management System</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Sora:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+
+<!-- Latest Supabase JavaScript SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+
+:root{
+  --ink:#1c2b20;
+  --paper:#f6f2e6;
+  --paper-line:#e2dac4;
+  --chalk-deep:#12261a;
+  --chalk-mid:#173a26;
+  --chalk-board:#0e2117;
+  --brass:#c9962e;
+  --brass-light:#e3b752;
+  --stamp-red:#9c3b32;
+  --muted:#5c6b5f;
+  --white:#fffdf7;
+  --radius:14px;
+  --shadow-card:0 18px 40px rgba(23,58,38,.12);
+}
+
+[data-theme="chalk"]{
+  --paper:#0e2117;
+  --paper-line:#1e3a29;
+  --ink:#f0ead8;
+  --muted:#a9baa9;
+  --white:#152c1f;
+  --shadow-card:0 18px 40px rgba(0,0,0,.4);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Sora',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  transition:background .4s ease,color .4s ease;
+  overflow-x:hidden;
+}
+::selection{background:var(--brass);color:#1c1200;}
+a{color:inherit;}
+h1,h2,h3,.display{font-family:'Fraunces',serif;}
+button{font-family:inherit;}
+
+.ruled{
+  background-image:repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 38px,
+    var(--paper-line) 39px
+  );
+}
+
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  font-size:12px;
+  color:var(--brass);
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.eyebrow::before{content:"§";}
+
+.section-head{max-width:640px;margin:0 auto 56px;text-align:center;}
+.section-head h2{font-size:clamp(28px,4vw,42px);margin:12px 0 14px;font-weight:600;}
+.section-head p{color:var(--muted);line-height:1.7;}
+
+.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  justify-content:center;
+  padding:15px 32px;
+  border-radius:999px;
+  font-weight:600;
+  font-size:15px;
+  cursor:pointer;
+  border:2px solid var(--brass);
+  background:var(--brass);
+  color:#1c1200;
+  text-decoration:none;
+  transition:transform .25s ease,box-shadow .25s ease,background .25s ease;
+}
+.btn:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(201,150,46,.35);}
+.btn:active{transform:translateY(0);}
+.btn.ghost{background:transparent;color:var(--white);border-color:rgba(255,253,247,.5);}
+.btn.ghost:hover{background:rgba(255,253,247,.1);border-color:var(--white);box-shadow:none;}
+.btn.small{padding:11px 22px;font-size:14px;}
+.btn.block{width:100%;}
+.btn:focus-visible, a:focus-visible, input:focus-visible, button:focus-visible{
+  outline:3px solid var(--brass-light);outline-offset:2px;
+}
+
+header{
+  position:fixed;top:0;left:0;width:100%;z-index:1000;
+  padding:16px 6%;
+  display:flex;justify-content:space-between;align-items:center;
+  background:rgba(14,33,23,.6);
+  backdrop-filter:blur(14px);
+  transition:.35s ease;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+header.scrolled{background:rgba(10,24,17,.92);padding:12px 6%;}
+
+.logo{
+  display:flex;align-items:center;gap:10px;
+  color:var(--white,#fffdf7);
+  font-family:'Fraunces',serif;font-weight:600;font-size:24px;
+}
+.logo .stamp-mark{
+  width:34px;height:34px;border-radius:50%;
+  border:2px solid var(--brass);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--brass);font-size:14px;flex-shrink:0;
+}
+
+nav.primary-nav ul{display:flex;gap:34px;list-style:none;}
+nav.primary-nav a{
+  color:#f0ead8;text-decoration:none;font-weight:500;font-size:15px;
+  position:relative;padding-bottom:4px;
+}
+nav.primary-nav a::after{
+  content:"";position:absolute;left:0;bottom:0;width:0;height:2px;background:var(--brass);
+  transition:width .3s ease;
+}
+nav.primary-nav a:hover::after,
+nav.primary-nav a.active::after{width:100%;}
+nav.primary-nav a.active{color:var(--brass-light);}
+
+.header-actions{display:flex;align-items:center;gap:12px;}
+
+.theme-toggle{
+  width:40px;height:40px;border-radius:50%;
+  border:1px solid rgba(255,253,247,.3);
+  background:transparent;color:#f0ead8;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:.3s;
+}
+.theme-toggle:hover{border-color:var(--brass);color:var(--brass);}
+
+.hamburger{
+  display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;z-index:1300;
+}
+.hamburger span{width:26px;height:2.5px;background:#f0ead8;border-radius:2px;transition:.3s;}
+.hamburger.active span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hamburger.active span:nth-child(2){opacity:0;}
+.hamburger.active span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+.hero{
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255,255,255,.03) 0, transparent 45%),
+    radial-gradient(circle at 85% 75%, rgba(255,255,255,.025) 0, transparent 40%),
+    linear-gradient(160deg,var(--chalk-deep),var(--chalk-board) 70%);
+  display:flex;align-items:center;
+  padding:150px 6% 80px;
+  position:relative;
+}
+.hero-grid{
+  max-width:1280px;margin:auto;width:100%;
+  display:grid;grid-template-columns:1.05fr .95fr;gap:60px;align-items:center;
+}
+.hero-copy .tagline{
+  display:inline-block;color:var(--brass-light);
+  border:1px solid rgba(201,150,46,.5);
+  background:rgba(201,150,46,.08);
+  padding:7px 16px;border-radius:999px;
+  font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:1px;
+  margin-bottom:22px;
+}
+.hero-copy h1{
+  color:#f6f2e6;font-size:clamp(38px,5.4vw,64px);line-height:1.08;font-weight:600;margin-bottom:18px;
+}
+.hero-copy h1 em{color:var(--brass-light);font-style:normal;}
+.hero-copy p{color:#c7d0c4;font-size:17px;line-height:1.75;max-width:480px;margin-bottom:34px;}
+.hero-btns{display:flex;gap:16px;flex-wrap:wrap;}
+
+.ledger-card{
+  background:var(--white,#fffdf7);
+  border-radius:18px;
+  padding:28px 26px 24px;
+  box-shadow:0 30px 70px rgba(0,0,0,.45);
+  position:relative;
+  transform:rotate(-1.2deg);
+  animation:cardIn 1s cubic-bezier(.2,.8,.2,1) both;
+  color:#1c2b20;
+}
+@keyframes cardIn{
+  from{opacity:0;transform:rotate(-1.2deg) translateY(40px);}
+  to{opacity:1;transform:rotate(-1.2deg) translateY(0);}
+}
+.ledger-card .lc-top{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  border-bottom:1px dashed #cfc6a8;padding-bottom:14px;margin-bottom:14px;
+}
+.ledger-card .lc-top h3{font-size:18px;font-weight:600;}
+.ledger-card .lc-top span{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6a7a6d;}
+.lc-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px 0;font-size:14px;border-bottom:1px solid #ece5cf;
+}
+.lc-row:last-of-type{border-bottom:none;}
+.lc-row .subject{font-weight:500;}
+.lc-bar{
+  flex:1;max-width:120px;height:6px;background:#ece5cf;border-radius:99px;margin:0 12px;overflow:hidden;
+}
+.lc-bar span{
+  display:block;height:100%;background:linear-gradient(90deg,var(--brass),var(--brass-light));
+  border-radius:99px;width:0;transition:width 1.4s cubic-bezier(.2,.8,.2,1);
+}
+.lc-grade{font-family:'IBM Plex Mono',monospace;font-weight:600;color:#1c2b20;width:28px;text-align:right;}
+.stamp{
+  position:absolute;top:-18px;right:-14px;
+  width:82px;height:82px;border-radius:50%;
+  border:3px solid var(--stamp-red);color:var(--stamp-red);
+  display:flex;align-items:center;justify-content:center;
+  text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;
+  letter-spacing:.5px;text-transform:uppercase;line-height:1.2;
+  transform:rotate(14deg);
+  animation:stampIn .5s .9s cubic-bezier(.3,1.4,.5,1) both;
+  background:rgba(255,253,247,.9);
+}
+@keyframes stampIn{from{opacity:0;transform:rotate(14deg) scale(1.8);}to{opacity:1;transform:rotate(14deg) scale(1);}}
+
+.scroll-cue{
+  position:absolute;bottom:26px;left:50%;transform:translateX(-50%);
+  color:#c7d0c4;font-size:20px;animation:bob 2s infinite;
+}
+@keyframes bob{0%,100%{transform:translate(-50%,0);}50%{transform:translate(-50%,-10px);}}
+
+.features{padding:120px 6% 100px;}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:26px;max-width:1280px;margin:auto;}
+.index-card{
+  background:var(--white);
+  border-radius:12px;
+  padding:32px 28px;
+  box-shadow:var(--shadow-card);
+  border-left:4px solid var(--brass);
+  position:relative;
+  transition:transform .35s ease, box-shadow .35s ease;
+  opacity:0;transform:translateY(30px);
+}
+.index-card.revealed{opacity:1;transform:translateY(0);transition:opacity .6s ease,transform .6s ease;}
+.index-card:hover{transform:translateY(-8px);box-shadow:0 26px 50px rgba(23,58,38,.18);}
+.index-card .tab{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:14px;
+}
+.index-card i{font-size:30px;color:var(--brass);margin-bottom:16px;}
+.index-card h3{font-size:19px;margin-bottom:10px;font-weight:600;}
+.index-card p{color:var(--muted);line-height:1.65;font-size:14.5px;}
+
+.programs{padding:100px 6%;background:var(--white);}
+.program-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:22px;max-width:1280px;margin:auto;}
+.program-item{position:relative;border-radius:14px;overflow:hidden;height:260px;opacity:0;transform:translateY(30px);}
+.program-item.revealed{opacity:1;transform:translateY(0);transition:opacity .6s ease,transform .6s ease;}
+.program-item img{width:100%;height:100%;object-fit:cover;transition:.6s;}
+.program-item:hover img{transform:scale(1.08);}
+.program-overlay{
+  position:absolute;inset:0;background:linear-gradient(0deg,rgba(14,33,23,.92),transparent 55%);
+  display:flex;flex-direction:column;justify-content:flex-end;padding:20px;
+}
+.program-overlay span{color:var(--brass-light);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1px;margin-bottom:4px;}
+.program-overlay h3{color:#fff;font-size:19px;font-weight:600;}
+
+.stats{
+  background:var(--chalk-mid);color:#f0ead8;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  text-align:center;padding:80px 6%;
+}
+.stats div{padding:14px;border-right:1px solid rgba(255,255,255,.08);}
+.stats div:last-child{border-right:none;}
+.stats i{font-size:24px;color:var(--brass-light);margin-bottom:10px;display:block;}
+.stats h2{font-family:'IBM Plex Mono',monospace;font-size:44px;color:var(--brass-light);font-weight:600;}
+.stats p{color:#b9c6b7;margin-top:6px;font-size:14px;letter-spacing:.5px;}
+
+
+.testimonials{padding:110px 6%;}
+.testimonial-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:26px;max-width:1280px;margin:40px auto 0;}
+.testimonial-card{
+  background:var(--white);border-radius:14px;padding:30px 26px;box-shadow:var(--shadow-card);
+  position:relative;opacity:0;transform:translateY(30px);
+}
+.testimonial-card.revealed{opacity:1;transform:translateY(0);transition:opacity .6s ease,transform .6s ease;}
+.testimonial-card i.fa-quote-left{color:var(--brass);font-size:22px;margin-bottom:14px;}
+.testimonial-card p{color:var(--muted);line-height:1.7;margin-bottom:20px;font-size:14.5px;}
+.t-user{display:flex;align-items:center;gap:13px;}
+.t-user img{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--brass);}
+.t-user h4{font-size:14.5px;font-weight:600;}
+.t-user span{font-size:12.5px;color:var(--muted);}
+
+.registration{padding:110px 6%;background:var(--paper);}
+.registration-card{
+  max-width:680px;margin:0 auto;background:var(--white);padding:38px 32px;
+  border-radius:var(--radius);box-shadow:var(--shadow-card);border-top:4px solid var(--brass);
+}
+
+.contact{padding:110px 6%;background:var(--white);}
+.contact-wrap{display:grid;grid-template-columns:.9fr 1.1fr;gap:56px;max-width:1180px;margin:auto;}
+.contact-info h2{font-size:32px;margin-bottom:16px;font-weight:600;}
+.contact-info p{color:var(--muted);line-height:1.75;margin-bottom:28px;}
+.info-item{display:flex;align-items:center;gap:14px;margin-bottom:18px;font-size:14.5px;}
+.info-item i{
+  background:var(--brass);color:#1c1200;width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.contact-form{display:grid;gap:16px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.field{position:relative;}
+.contact-form input,.contact-form textarea{
+  width:100%;padding:14px 16px;border-radius:10px;border:1.5px solid var(--paper-line);
+  font-family:inherit;font-size:14px;background:var(--paper);color:var(--ink);resize:none;
+  transition:border-color .25s ease;
+}
+.contact-form input:focus,.contact-form textarea:focus{border-color:var(--brass);outline:none;}
+.field small.err{
+  display:none;color:var(--stamp-red);font-size:12px;margin-top:5px;font-family:'IBM Plex Mono',monospace;
+}
+.field.invalid input,.field.invalid textarea{border-color:var(--stamp-red);}
+.field.invalid small.err{display:block;}
+
+footer{background:var(--chalk-board);color:#dfe6dc;padding:70px 6% 26px;}
+.footer-grid{
+  display:grid;grid-template-columns:2fr 1fr 1fr 1.3fr;gap:40px;
+  padding-bottom:36px;border-bottom:1px solid rgba(255,255,255,.08);max-width:1280px;margin:auto;
+}
+.footer-col p{color:#a6b3a2;line-height:1.7;font-size:13.5px;margin-top:12px;}
+.footer-col .logo{color:#f0ead8;margin-bottom:6px;}
+.footer-col h4{margin-bottom:18px;font-size:15px;color:#f0ead8;font-weight:600;}
+.footer-col ul{list-style:none;}
+.footer-col ul li{margin-bottom:11px;}
+.footer-col ul li a{color:#a6b3a2;text-decoration:none;font-size:13.5px;transition:.25s;}
+.footer-col ul li a:hover{color:var(--brass-light);padding-left:4px;}
+.social-icons{display:flex;gap:10px;margin-top:18px;}
+.social-icons a{
+  width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;text-decoration:none;color:#dfe6dc;transition:.25s;
+}
+.social-icons a:hover{background:var(--brass);color:#1c1200;border-color:var(--brass);}
+.footer-bottom{text-align:center;padding-top:20px;font-size:12.5px;color:#7f8f7c;max-width:1280px;margin:auto;}
+
+.back-to-top{
+  position:fixed;bottom:28px;right:28px;width:48px;height:48px;border-radius:50%;
+  background:var(--brass);color:#1c1200;display:flex;align-items:center;justify-content:center;
+  text-decoration:none;font-size:17px;opacity:0;pointer-events:none;transition:.3s;z-index:900;
+  box-shadow:0 10px 24px rgba(0,0,0,.25);
+}
+.back-to-top.show{opacity:1;pointer-events:auto;}
+
+.toast-stack{
+  position:fixed;bottom:28px;left:28px;display:flex;flex-direction:column;gap:10px;z-index:2100;
+}
+.toast{
+  background:var(--chalk-board);color:#f0ead8;padding:14px 18px;border-radius:10px;
+  display:flex;align-items:center;gap:10px;font-size:14px;min-width:240px;
+  box-shadow:0 14px 30px rgba(0,0,0,.35);
+  border-left:4px solid var(--brass);
+  transform:translateX(-120%);transition:transform .4s cubic-bezier(.3,1,.5,1);
+}
+.toast.show{transform:translateX(0);}
+.toast i{color:var(--brass-light);}
+.toast.error{border-left-color:var(--stamp-red);}
+.toast.error i{color:var(--stamp-red);}
+
+.login-overlay{
+  position:fixed;inset:0;background:rgba(10,20,14,.55);backdrop-filter:blur(3px);
+  z-index:1500;opacity:0;pointer-events:none;transition:opacity .35s ease;
+}
+.login-overlay.open{opacity:1;pointer-events:auto;}
+
+.login-panel{
+  position:fixed;top:0;right:-440px;width:420px;max-width:92vw;height:100%;
+  background:var(--white,#fffdf7);color:#1c2b20;z-index:1600;
+  box-shadow:-20px 0 60px rgba(0,0,0,.35);
+  padding:40px 34px;overflow-y:auto;
+  transition:right .45s cubic-bezier(.2,.9,.25,1);
+}
+.login-panel.open{right:0;}
+.login-panel .close-panel{
+  position:absolute;top:22px;right:22px;background:none;border:none;font-size:20px;cursor:pointer;color:#1c2b20;
+}
+.login-panel .id-strip{
+  display:flex;align-items:center;gap:10px;margin-bottom:8px;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;color:var(--muted);
+  text-transform:uppercase;
+}
+.login-panel h2{font-size:26px;margin:6px 0 6px;font-weight:600;}
+.login-panel > p.sub{color:var(--muted);font-size:14px;margin-bottom:28px;}
+
+.tab-switch{display:flex;background:#ece5cf;border-radius:99px;padding:4px;margin-bottom:26px;}
+.tab-switch button{
+  flex:1;border:none;background:none;padding:10px 0;border-radius:99px;font-weight:600;font-size:13.5px;
+  cursor:pointer;color:#5c6b5f;transition:.25s;
+}
+.tab-switch button.active{background:var(--chalk-board);color:#f0ead8;}
+
+.input-group{margin-bottom:18px;position:relative;}
+.input-group label{display:block;margin-bottom:7px;font-weight:600;font-size:13px;}
+.input-group input{
+  width:100%;padding:13px 44px 13px 14px;border:1.5px solid var(--paper-line);border-radius:10px;
+  outline:none;font-size:14px;font-family:inherit;background:var(--paper);color:var(--ink);
+  transition:border-color .25s ease;
+}
+.input-group input:focus{border-color:var(--brass);}
+.toggle-password{position:absolute;right:14px;top:41px;cursor:pointer;color:#7a8a7c;}
+.login-options{display:flex;justify-content:space-between;font-size:13px;margin-bottom:22px;align-items:center;}
+.login-options label{display:flex;align-items:center;gap:7px;color:var(--muted);}
+.login-options a{color:var(--brass);text-decoration:none;font-weight:600;}
+.login-panel .register-line{margin-top:20px;text-align:center;font-size:13.5px;color:var(--muted);}
+.login-panel .register-line a{color:var(--brass);text-decoration:none;font-weight:600;}
+.strength-hint{font-size:11.5px;color:var(--muted);margin-top:6px;font-family:'IBM Plex Mono',monospace;}
+
+@media (max-width:1050px){
+  .hero-grid{grid-template-columns:1fr;}
+  .ledger-card{max-width:420px;margin:auto;}
+  .contact-wrap{grid-template-columns:1fr;}
+}
+@media (max-width:900px){
+  nav.primary-nav{
+    position:fixed;top:0;right:-100%;height:100vh;width:280px;
+    background:var(--chalk-board);flex-direction:column;justify-content:center;
+    transition:right .4s ease;z-index:1200;box-shadow:-10px 0 30px rgba(0,0,0,.3);
+  }
+  nav.primary-nav.active{right:0;display:flex;}
+  nav.primary-nav ul{flex-direction:column;gap:26px;text-align:center;width:100%;padding:0 30px;}
+  .hamburger{display:flex;}
+  .footer-grid{grid-template-columns:1fr 1fr;}
+  .stats div{border-right:none;border-bottom:1px solid rgba(255,255,255,.08);}
+}
+@media (max-width:600px){
+  .hero{padding:130px 6% 70px;}
+  .form-row{grid-template-columns:1fr;}
+  .footer-grid{grid-template-columns:1fr;text-align:center;}
+  .stats{grid-template-columns:1fr 1fr;}
+  .social-icons{justify-content:center;}
+  .login-panel{padding:34px 22px;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms !important;transition-duration:.001ms !important;}
+}
+
+</style>
+</head>
+
+<body data-theme="paper">
+
+<header id="mainHeader">
+  <div class="logo">
+    <span class="stamp-mark"><i class="fa-solid fa-feather-pointed"></i></span>
+    EduSphere
+  </div>
+
+  <nav class="primary-nav" id="navLinks">
+    <ul>
+      <li><a href="#home" class="active">Home</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#programs">Programs</a></li>
+      <li><a href="#testimonials">Voices</a></li>
+      <li><a href="#registration">Registration</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <div class="header-actions">
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle chalkboard mode" title="Toggle chalkboard mode">
+      <i class="fa-solid fa-moon"></i>
+    </button>
+    <a href="#" class="btn small ghost" id="openLogin">Log in</a>
+    <a href="#registration" class="btn small">Register Student</a>
+    <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<section class="hero" id="home">
+  <div class="hero-grid">
+
+    <div class="hero-copy">
+      <span class="tagline">TRUSTED BY 200+ SCHOOLS WORLDWIDE</span>
+      <h1>Every grade, every child, <em>on the record.</em></h1>
+      <p>EduSphere keeps attendance, grades, assignments and family communication in one ledger — built for students, teachers, parents and administrators who all need the same page open at once.</p>
+      <div class="hero-btns">
+        <a href="#registration" class="btn">Register Student</a>
+        <a href="#" class="btn ghost" id="openLoginHero">See a Live Report Card <i class="fa-solid fa-arrow-right"></i></a>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="ledger-card">
+        <div class="stamp">Attendance<br>Verified</div>
+        <div class="lc-top">
+          <h3>Eakraj Rai — Grade 11</h3>
+          <span>TERM 02 · 2026</span>
+        </div>
+        <div class="lc-row">
+          <span class="subject">Mathematics</span>
+          <div class="lc-bar"><span data-width="92"></span></div>
+          <span class="lc-grade">A</span>
+        </div>
+        <div class="lc-row">
+          <span class="subject">Science</span>
+          <div class="lc-bar"><span data-width="86"></span></div>
+          <span class="lc-grade">A-</span>
+        </div>
+        <div class="lc-row">
+          <span class="subject">English</span>
+          <div class="lc-bar"><span data-width="78"></span></div>
+          <span class="lc-grade">B+</span>
+        </div>
+        <div class="lc-row">
+          <span class="subject">Attendance</span>
+          <div class="lc-bar"><span data-width="97"></span></div>
+          <span class="lc-grade">97%</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <a href="#about" class="scroll-cue"><i class="fa-solid fa-chevron-down"></i></a>
+</section>
+
+<section class="features" id="about">
+  <div class="section-head">
+    <span class="eyebrow">Platform</span>
+    <h2>One ledger, four roles</h2>
+    <p>The same record of truth, opened from four different desks — a student's phone, a teacher's desk, a parent's kitchen table, and the front office.</p>
+  </div>
+
+  <div class="cards">
+    <div class="index-card"><span class="tab">FILE 01 — STUDENTS</span>
+      <i class="fa-solid fa-user-graduate"></i>
+      <h3>Students</h3>
+      <p>Track attendance, view results and submit assignments from any device, any time.</p>
+    </div>
+    <div class="index-card"><span class="tab">FILE 02 — TEACHERS</span>
+      <i class="fa-solid fa-chalkboard-user"></i>
+      <h3>Teachers</h3>
+      <p>Enter marks, manage classes and share resources in a few clicks — no more paper registers.</p>
+    </div>
+    <div class="index-card"><span class="tab">FILE 03 — ADMIN</span>
+      <i class="fa-solid fa-user-shield"></i>
+      <h3>Administration</h3>
+      <p>Complete oversight of staff, fees and reporting, updated in real time across every branch.</p>
+    </div>
+    <div class="index-card"><span class="tab">FILE 04 — PARENTS</span>
+      <i class="fa-solid fa-comments"></i>
+      <h3>Parents</h3>
+      <p>Instant updates on grades, attendance and events — without a single phone call to the office.</p>
+    </div>
+  </div>
+</section>
+
+<section class="programs" id="programs">
+  <div class="section-head">
+    <span class="eyebrow">Academics</span>
+    <h2>Our Programs</h2>
+    <p>A wide range of programs designed to help every student thrive.</p>
+  </div>
+
+  <div class="program-grid">
+    <div class="program-item">
+      <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=600&q=80" alt="Science Program" loading="lazy">
+      <div class="program-overlay"><span>DEPT. 01</span><h3>Science &amp; Technology</h3></div>
+    </div>
+    <div class="program-item">
+      <img src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80" alt="Arts Program" loading="lazy">
+      <div class="program-overlay"><span>DEPT. 02</span><h3>Arts &amp; Humanities</h3></div>
+    </div>
+    <div class="program-item">
+      <img src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=600&q=80" alt="Sports Program" loading="lazy">
+      <div class="program-overlay"><span>DEPT. 03</span><h3>Sports &amp; Athletics</h3></div>
+    </div>
+    <div class="program-item">
+      <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=600&q=80" alt="Business Program" loading="lazy">
+      <div class="program-overlay"><span>DEPT. 04</span><h3>Business Studies</h3></div>
+    </div>
+  </div>
+</section>
+
+<section class="stats" id="stats">
+  <div><i class="fa-solid fa-user-graduate"></i><h2 data-count="3000">0</h2><p>STUDENTS</p></div>
+  <div><i class="fa-solid fa-chalkboard-user"></i><h2 data-count="120">0</h2><p>TEACHERS</p></div>
+  <div><i class="fa-solid fa-book"></i><h2 data-count="50">0</h2><p>COURSES</p></div>
+  <div><i class="fa-solid fa-trophy"></i><h2 data-count="98" data-suffix="%">0</h2><p>SUCCESS RATE</p></div>
+</section>
+
+<section class="testimonials" id="testimonials">
+  <div class="section-head">
+    <span class="eyebrow">Voices</span>
+    <h2>What People Say</h2>
+    <p>Feedback from students, parents and teachers who open EduSphere every day.</p>
+  </div>
+
+  <div class="testimonial-grid">
+    <div class="testimonial-card">
+      <i class="fa-solid fa-quote-left"></i>
+      <p>EduSphere made it so much easier to keep track of my daughter's homework and attendance without calling the school office.</p>
+      <div class="t-user">
+        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80" alt="Anita Sharma">
+        <div><h4>Sita</h4><span>Parent</span></div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <i class="fa-solid fa-quote-left"></i>
+      <p>Grading and attendance used to take hours every week. Now I finish it all before the first period even ends.</p>
+      <div class="t-user">
+        <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=100&q=80" alt="Ramesh Thapa">
+        <div><h4>Mita</h4><span>Teacher</span></div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <i class="fa-solid fa-quote-left"></i>
+      <p>I can check my results and assignment deadlines right from my phone. It's simple and always up to date.</p>
+      <div class="t-user">
+        <img src="https://images.unsplash.com/photo-1520813792240-56fc4a3765a7?auto=format&fit=crop&w=100&q=80" alt="Sabina Karki">
+        <div><h4> Gita</h4><span>Student</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Student Registration Section -->
+<section class="registration" id="registration">
+  <div class="section-head">
+    <span class="eyebrow">Enrollment</span>
+    <h2>Student Registration</h2>
+    <p>Fill in the required information below to register a student into the system.</p>
+  </div>
+
+  <div class="registration-card">
+    <form id="registrationForm" class="contact-form" novalidate>
+      <div class="form-row">
+        <div class="field">
+          <label for="reg-name" style="display:block;margin-bottom:6px;font-weight:600;font-size:13px;color:var(--ink);">Full Name *</label>
+          <input type="text" id="reg-name" placeholder="Enter student full name" required>
+          <small class="err">Please enter student's full name.</small>
+        </div>
+
+        <div class="field">
+          <label for="reg-email" style="display:block;margin-bottom:6px;font-weight:600;font-size:13px;color:var(--ink);">Email Address *</label>
+          <input type="email" id="reg-email" placeholder="student@example.com" required>
+          <small class="err">Please enter a valid email address.</small>
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-top:12px;">
+        <div class="field">
+          <label for="reg-phone" style="display:block;margin-bottom:6px;font-weight:600;font-size:13px;color:var(--ink);">Phone Number *</label>
+          <input type="tel" id="reg-phone" placeholder="Enter phone number" required>
+          <small class="err">Please enter student's phone number.</small>
+        </div>
+
+        <div class="field">
+          <label for="reg-class" style="display:block;margin-bottom:6px;font-weight:600;font-size:13px;color:var(--ink);">Class / Grade *</label>
+          <input type="text" id="reg-class" placeholder="e.g. Grade 10, Class A" required>
+          <small class="err">Please enter student's class.</small>
+        </div>
+      </div>
+
+      <button type="submit" class="btn block" id="btnCreateAccount" style="margin-top:24px;justify-content:center;">
+        Create Account <i class="fa-solid fa-user-plus"></i>
+      </button>
+    </form>
+  </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="contact-wrap">
+
+    <div class="contact-info">
+      <span class="eyebrow">Reach Us</span>
+      <h2>Get In Touch</h2>
+      <p>Have questions about EduSphere? Send us a note and our team will reply within one business day.</p>
+
+      <div class="info-item"><i class="fa-solid fa-location-dot"></i><span>123 School Lane, Sunsari, Nepal</span></div>
+      <div class="info-item"><i class="fa-solid fa-phone"></i><span>+977 000 0000</span></div>
+      <div class="info-item"><i class="fa-solid fa-envelope"></i><span>speedxd174@gmail.com</span></div>
+    </div>
+
+    <form class="contact-form" id="contactForm" novalidate>
+      <div class="form-row">
+        <div class="field">
+          <input type="text" id="c-name" placeholder="Full Name" required>
+          <small class="err">Please enter your name.</small>
+        </div>
+        <div class="field">
+          <input type="email" id="c-email" placeholder="Email Address" required>
+          <small class="err">Please enter a valid email.</small>
+        </div>
+      </div>
+
+      <div class="field">
+        <input type="text" id="c-subject" placeholder="Subject">
+      </div>
+
+      <div class="field">
+        <textarea rows="5" id="c-message" placeholder="Your Message" required></textarea>
+        <small class="err">Tell us a little about what you need.</small>
+      </div>
+
+      <button type="submit" class="btn" style="justify-self:start;">Send Message <i class="fa-solid fa-paper-plane"></i></button>
+    </form>
+
+  </div>
+</section>
+
+<footer>
+  <div class="footer-grid">
+    <div class="footer-col">
+      <div class="logo"><span class="stamp-mark"><i class="fa-solid fa-feather-pointed"></i></span>EduSphere</div>
+      <p>A modern school management platform connecting students, teachers, parents and administrators in one place.</p>
+      <div class="social-icons">
+        <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+        <a href="#" aria-label="Twitter"><i class="fa-brands fa-twitter"></i></a>
+        <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+        <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="#home">Home</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#programs">Programs</a></li>
+        <li><a href="#registration">Registration</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <ul>
+        <li><a href="#registration">Admissions</a></li>
+        <li><a href="#">Gallery</a></li>
+        <li><a href="#">FAQs</a></li>
+        <li><a href="#">Support</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Newsletter</h4>
+      <p style="margin-top:0;margin-bottom:14px;">Subscribe for updates on admissions and events.</p>
+      <div class="info-item" style="margin-bottom:0;"><i class="fa-solid fa-envelope"></i><span>hello@edusphere.example</span></div>
+    </div>
+  </div>
+  <div class="footer-bottom"><p>&copy; 2026 EduSphere School Management System. All rights reserved.</p></div>
+</footer>
+
+<a href="#home" class="back-to-top" id="backToTop" aria-label="Back to top"><i class="fa-solid fa-arrow-up"></i></a>
+
+<div class="login-overlay" id="loginOverlay"></div>
+<aside class="login-panel" id="loginPanel" aria-hidden="true">
+  <button class="close-panel" id="closeLogin" aria-label="Close login"><i class="fa-solid fa-xmark"></i></button>
+
+  <div class="id-strip"><i class="fa-solid fa-id-card"></i> Access Card</div>
+  <h2>Welcome back</h2>
+  <p class="sub">Sign in to open your dashboard.</p>
+
+  <div class="tab-switch">
+    <button type="button" class="active" data-role="student">Student / Parent</button>
+    <button type="button" data-role="staff">Teacher / Admin</button>
+  </div>
+
+  <form id="loginForm" novalidate>
+    <div class="input-group">
+      <label for="l-email">Email</label>
+      <input type="email" id="l-email" placeholder="you@example.com" required>
+    </div>
+
+    <div class="input-group">
+      <label for="l-password">Password</label>
+      <input type="password" id="l-password" placeholder="Enter password" required minlength="6">
+      <i class="fa-solid fa-eye toggle-password" id="togglePassword"></i>
+      <div class="strength-hint" id="strengthHint"></div>
+    </div>
+
+    <div class="login-options">
+      <label><input type="checkbox"> Remember me</label>
+      <a href="#">Forgot password?</a>
+    </div>
+
+    <button type="submit" class="btn block">Log In <i class="fa-solid fa-arrow-right-to-bracket"></i></button>
+  </form>
+
+  <p class="register-line">Don't have an account? <a href="#registration" id="closeLoginToRegister">Register student account</a></p>
+</aside>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script>
+
+// --- SUPABASE CONFIGURATION ---
+const SUPABASE_URL = "https://ojdhmaoioqlhcvpgcnso.supabase.co";
+const SUPABASE_KEY = "sb_publishable_E86gqK_aOUgr6tGxV_OO4A_uoUXapLR";
+
+// Initialize Supabase Client using the latest 
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+const hamburger = document.getElementById("hamburgerBtn");
+const navLinks  = document.getElementById("navLinks");
+const header    = document.getElementById("mainHeader");
+const backToTop = document.getElementById("backToTop");
+const sections  = document.querySelectorAll("section[id]");
+const navAnchors= document.querySelectorAll("#navLinks a");
+
+hamburger.addEventListener("click", () => {
+  hamburger.classList.toggle("active");
+  navLinks.classList.toggle("active");
+});
+navAnchors.forEach(a => a.addEventListener("click", () => {
+  hamburger.classList.remove("active");
+  navLinks.classList.remove("active");
+}));
+
+window.addEventListener("scroll", () => {
+  header.classList.toggle("scrolled", window.scrollY > 60);
+  backToTop.classList.toggle("show", window.scrollY > 400);
+
+  let current = "";
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 130) current = s.id;
+  });
+  navAnchors.forEach(a => {
+    a.classList.toggle("active", a.getAttribute("href") === "#" + current);
+  });
+});
+
+const themeToggle = document.getElementById("themeToggle");
+const savedTheme = localStorage.getItem("edusphere-theme") || "paper";
+document.body.setAttribute("data-theme", savedTheme);
+updateThemeIcon(savedTheme);
+
+themeToggle.addEventListener("click", () => {
+  const next = document.body.getAttribute("data-theme") === "paper" ? "chalk" : "paper";
+  document.body.setAttribute("data-theme", next);
+  localStorage.setItem("edusphere-theme", next);
+  updateThemeIcon(next);
+});
+
+function updateThemeIcon(theme){
+  themeToggle.innerHTML = theme === "chalk"
+    ? '<i class="fa-solid fa-sun"></i>'
+    : '<i class="fa-solid fa-moon"></i>';
+}
+
+const revealTargets = document.querySelectorAll(".index-card, .program-item, .testimonial-card");
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("revealed"); });
+}, { threshold: .2 });
+revealTargets.forEach(el => revealObserver.observe(el));
+
+window.addEventListener("load", () => {
+  document.querySelectorAll(".lc-bar span").forEach(bar => {
+    requestAnimationFrame(() => { bar.style.width = bar.dataset.width + "%"; });
+  });
+});
+
+const statObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const el = entry.target;
+    const target = parseInt(el.dataset.count, 10);
+    const suffix = el.dataset.suffix || "+";
+    let count = 0;
+    const speed = Math.max(1, Math.ceil(target / 80));
+    const timer = setInterval(() => {
+      count += speed;
+      if (count >= target) { el.textContent = target + suffix; clearInterval(timer); }
+      else { el.textContent = count + suffix; }
+    }, 20);
+    statObserver.unobserve(el);
+  });
+}, { threshold: .4 });
+document.querySelectorAll(".stats h2").forEach(el => statObserver.observe(el));
+
+function showToast(message, type = "success"){
+  const stack = document.getElementById("toastStack");
+  const toast = document.createElement("div");
+  toast.className = "toast" + (type === "error" ? " error" : "");
+  toast.innerHTML = `<i class="fa-solid ${type === "error" ? "fa-triangle-exclamation" : "fa-circle-check"}"></i><span>${message}</span>`;
+  stack.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("show"));
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 400);
+  }, 3600);
+}
+
+const loginPanel   = document.getElementById("loginPanel");
+const loginOverlay = document.getElementById("loginOverlay");
+const openLoginBtns = [document.getElementById("openLogin"), document.getElementById("openLoginHero")];
+const closeLoginBtn = document.getElementById("closeLogin");
+const closeLoginToRegister = document.getElementById("closeLoginToRegister");
+
+function openLogin(e){
+  if (e) e.preventDefault();
+  loginPanel.classList.add("open");
+  loginOverlay.classList.add("open");
+  loginPanel.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+function closeLogin(){
+  loginPanel.classList.remove("open");
+  loginOverlay.classList.remove("open");
+  loginPanel.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+openLoginBtns.forEach(btn => btn && btn.addEventListener("click", openLogin));
+closeLoginBtn.addEventListener("click", closeLogin);
+if (closeLoginToRegister) {
+  closeLoginToRegister.addEventListener("click", closeLogin);
+}
+loginOverlay.addEventListener("click", closeLogin);
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeLogin(); });
+
+document.querySelectorAll(".tab-switch button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-switch button").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  });
+});
+
+const passwordInput = document.getElementById("l-password");
+document.getElementById("togglePassword").addEventListener("click", (e) => {
+  const isPassword = passwordInput.type === "password";
+  passwordInput.type = isPassword ? "text" : "password";
+  e.target.classList.toggle("fa-eye");
+  e.target.classList.toggle("fa-eye-slash");
+});
+passwordInput.addEventListener("input", () => {
+  const hint = document.getElementById("strengthHint");
+  const val = passwordInput.value;
+  if (!val) { hint.textContent = ""; return; }
+  hint.textContent = val.length < 6 ? "Needs at least 6 characters" : "Looks good";
+});
+
+document.getElementById("loginForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const email = document.getElementById("l-email").value.trim();
+  const pass  = passwordInput.value;
+  const role  = document.querySelector(".tab-switch button.active").dataset.role;
+
+  if (!email || !pass) { showToast("Please fill in both fields.", "error"); return; }
+  if (pass.length < 6) { showToast("Password must be at least 6 characters.", "error"); return; }
+
+  showToast(`Welcome back — signed in as ${role === "staff" ? "Teacher/Admin" : "Student/Parent"}.`);
+  setTimeout(closeLogin, 900);
+  e.target.reset();
+  document.getElementById("strengthHint").textContent = "";
+});
+
+const contactForm = document.getElementById("contactForm");
+contactForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  let valid = true;
+
+  const name = document.getElementById("c-name");
+  const email = document.getElementById("c-email");
+  const message = document.getElementById("c-message");
+
+  toggleFieldError(name, name.value.trim().length === 0);
+  toggleFieldError(email, !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim()));
+  toggleFieldError(message, message.value.trim().length === 0);
+
+  valid = ![name, email, message].some(f => f.closest(".field").classList.contains("invalid"));
+
+  if (!valid){ showToast("Please fix the highlighted fields.", "error"); return; }
+
+  showToast("Thanks for reaching out — we'll reply within one business day.");
+  contactForm.reset();
+});
+
+function toggleFieldError(input, isInvalid){
+  const fieldContainer = input.closest(".field");
+  if (fieldContainer) {
+    fieldContainer.classList.toggle("invalid", isInvalid);
+  }
+}
+[ "c-name","c-email","c-message" ].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener("input", (e) => {
+      toggleFieldError(e.target, false);
+    });
+  }
+});
+
+// --- STUDENT REGISTRATION & SUPABASE INSERTION LOGIC ---
+const registrationForm = document.getElementById("registrationForm");
+if (registrationForm) {
+  registrationForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const nameInput  = document.getElementById("reg-name");
+    const emailInput = document.getElementById("reg-email");
+    const phoneInput = document.getElementById("reg-phone");
+    const classInput = document.getElementById("reg-class");
+
+    const name         = nameInput ? nameInput.value.trim() : "";
+    const email        = emailInput ? emailInput.value.trim() : "";
+    const phone        = phoneInput ? phoneInput.value.trim() : "";
+    const studentClass = classInput ? classInput.value.trim() : "";
+
+    const formValues = {
+      name: name,
+      email: email,
+      phone: phone,
+      class: studentClass
+    };
+
+    // 8. Add console.log() statement for debugging form values
+    console.log("Form values:", formValues);
+
+    // 5. Validate all required fields
+    let valid = true;
+
+    if (!name) {
+      if (nameInput) toggleFieldError(nameInput, true);
+      valid = false;
+    } else {
+      if (nameInput) toggleFieldError(nameInput, false);
+    }
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      if (emailInput) toggleFieldError(emailInput, true);
+      valid = false;
+    } else {
+      if (emailInput) toggleFieldError(emailInput, false);
+    }
+
+    if (!phone) {
+      if (phoneInput) toggleFieldError(phoneInput, true);
+      valid = false;
+    } else {
+      if (phoneInput) toggleFieldError(phoneInput, false);
+    }
+
+    if (!studentClass) {
+      if (classInput) toggleFieldError(classInput, true);
+      valid = false;
+    } else {
+      if (classInput) toggleFieldError(classInput, false);
+    }
+
+    if (!valid) {
+      showToast("Please fill in all required fields accurately.", "error");
+      return;
+    }
+
+    if (!supabaseClient) {
+      const initErr = "Supabase client is not initialized. Please check SDK script.";
+      console.log("Supabase error:", initErr);
+      showToast(initErr, "error");
+      return;
+    }
+
+    try {
+      // 4. Insert into 'students' table on click of "Create Account"
+      const { data, error } = await supabaseClient
+        .from("students")
+        .insert([
+          {
+            name: name,
+            email: email,
+            phone: phone,
+            class: studentClass
+          }
+        ])
+        .select();
+
+      if (error) {
+        // 8. console.log Supabase errors
+        console.log("Supabase error:", error);
+        // 7. Display the exact Supabase error message if the insert fails
+        const errMsg = error.message || error.details || JSON.stringify(error);
+        showToast(errMsg, "error");
+      } else {
+        // 8. console.log Inserted data
+        console.log("Inserted data:", data);
+        // 6. Display a success message when the record is saved
+        showToast("Student account created successfully!");
+        registrationForm.reset();
+      }
+    } catch (err) {
+      // 8. console.log Supabase errors
+      console.log("Supabase error:", err);
+      // 7. Display exact Supabase error message
+      showToast(err.message || "An unexpected error occurred.", "error");
+    }
+  });
+
+  ["reg-name", "reg-email", "reg-phone", "reg-class"].forEach(id => {
+    const input = document.getElementById(id);
+    if (input) {
+      input.addEventListener("input", (e) => {
+        toggleFieldError(e.target, false);
+      });
+    }
+  });
+}
+
+</script>
+</body>
+</html>
